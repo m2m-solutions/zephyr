@@ -10,16 +10,19 @@
 
 #include <errno.h>
 
+#include <sys/__assert.h>
+#include <zephyr/types.h>
+
+#include <init.h>
 #include <kernel.h>
+
+#include <device.h>
+
 #include <drivers/i2c.h>
 #include <drivers/sensor.h>
-#include <init.h>
 #include <drivers/gpio.h>
 #include <drivers/regulator.h>
 
-#include <sys/__assert.h>
-#include <zephyr/types.h>
-#include <device.h>
 #include <pm/pm.h>
 #include <pm/device_runtime.h>
 #include <logging/log.h>
@@ -58,7 +61,7 @@ struct vl53l0x_data {
 
 	const struct device *vdd_supply;
 	uint8_t power_on;
-	uint32_t pm_state;
+	uint32_t power_state;
 };
 
 static int vl53l0x_sample_fetch(const struct device *dev,
@@ -250,7 +253,6 @@ static int vl53l0x_init(const struct device *dev)
 
 	drv_data->vl53l0x.i2c = drv_data->i2c;
 	drv_data->vl53l0x.I2cDevAddr = DT_INST_REG_ADDR(0);
-	drv_data->pm_state = PM_DEVICE_ACTIVE_STATE;
 	pm_device_enable(dev);
 
 	/* Get info from sensor */
@@ -305,40 +307,36 @@ static void callback(struct onoff_manager *srv,
 
 static int vl5310x_pm_ctrl(const struct device *dev,
 													 uint32_t ctrl_cmd,
-													 void *ctx, pm_device_cb cb, void *arg){
+													 uint32_t *new_state,
+													 pm_device_cb cb,
+													 void *arg){
 	if(!dev || !dev->data)
 		return -ENODEV;
+
 	struct vl53l0x_data *self = dev->data;
-	switch(ctrl_cmd){
-		case PM_DEVICE_STATE_SET:{
-			uint32_t state = *((uint32_t*)ctx);
-			switch(state){
-				case PM_DEVICE_ACTIVE_STATE:
-					if(!self->power_on) {
-						regulator_enable(self->vdd_supply, NULL);
-						self->power_on = 1;
-					}
-					break;
-				case PM_DEVICE_LOW_POWER_STATE:
-					break;
-				case PM_DEVICE_SUSPEND_STATE:
-				case PM_DEVICE_FORCE_SUSPEND_STATE:
-				case PM_DEVICE_OFF_STATE:
-					if(self->power_on) {
-						regulator_disable(self->vdd_supply);
-						self->power_on = 0;
-					}
-					break;
-			}
-			self->pm_state = state;
-			break;
+	if(ctrl_cmd == PM_DEVICE_STATE_SET){
+		uint32_t state = *new_state;
+		switch(state){
+			case PM_DEVICE_STATE_ACTIVE:
+				if(!self->power_on) {
+					regulator_enable(self->vdd_supply, NULL);
+					self->power_on = 1;
+				}
+				break;
+			case PM_DEVICE_STATE_LOW_POWER:
+				break;
+			case PM_DEVICE_STATE_SUSPEND:
+			case PM_DEVICE_STATE_FORCE_SUSPEND:
+			case PM_DEVICE_STATE_OFF:
+				if(self->power_on) {
+					regulator_disable(self->vdd_supply);
+					self->power_on = 0;
+				}
+				break;
 		}
-		case PM_DEVICE_STATE_GET: {
-			*((uint32_t*)ctx) = self->pm_state;
-			break;
-		}
-		default:
-			return -EINVAL;
+		self->power_state = state;
+	} else if(ctrl_cmd == PM_DEVICE_STATE_GET){
+		*new_state = self->power_state;
 	}
 	return 0;
 }
