@@ -66,18 +66,14 @@ static void _gpio_save_state(){
 	cfg.Pull = GPIO_NOPULL;
 
 	LL_GPIO_Init(GPIOB, &cfg);
-	LL_GPIO_Init(GPIOC, &cfg);
 	LL_GPIO_Init(GPIOE, &cfg);
-
-
-	//cfg.Pin = (GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_9 | GPIO_PIN_10);
-	//cfg.Mode = GPIO_MODE_ANALOG;
-	//cfg.Pull = GPIO_NOPULL;
 	LL_GPIO_Init(GPIOH, &cfg);
 
 	// do not toggle PA0 since this is a wakeup pin!
 	cfg.Pin = 0xfffffffe;
 	LL_GPIO_Init(GPIOA, &cfg);
+	cfg.Pin = 0xfffffffd;
+	LL_GPIO_Init(GPIOC, &cfg);
 
 	__HAL_RCC_GPIOA_CLK_DISABLE();
 	__HAL_RCC_GPIOB_CLK_DISABLE();
@@ -108,6 +104,8 @@ static void _gpio_restore_state(){
 void pm_power_state_set(struct pm_state_info info)
 {
 	switch(info.state){
+		case PM_STATE_ACTIVE:
+			break;
 		case PM_STATE_RUNTIME_IDLE:
 			// simple idle mode
 			LL_FLASH_DisableSleepPowerDown();
@@ -152,6 +150,8 @@ void pm_power_state_set(struct pm_state_info info)
 			__disable_irq();
 			_gpio_save_state();
 			break;
+		case PM_STATE_SUSPEND_TO_DISK:
+			__fallthrough;
 		case PM_STATE_SOFT_OFF:
 			LL_PWR_EnableWakeUpPin(LL_PWR_WAKEUP_PIN1);
 			LL_PWR_EnableWakeUpPin(LL_PWR_WAKEUP_PIN2);
@@ -170,6 +170,8 @@ void pm_power_state_set(struct pm_state_info info)
 void pm_power_state_exit_post_ops(struct pm_state_info info)
 {
 	switch(info.state){
+		case PM_STATE_ACTIVE:
+			break;
 		case PM_STATE_RUNTIME_IDLE:
 		case PM_STATE_SUSPEND_TO_IDLE:
 		case PM_STATE_STANDBY:
@@ -179,6 +181,7 @@ void pm_power_state_exit_post_ops(struct pm_state_info info)
 		case PM_STATE_SUSPEND_TO_RAM:
 			_gpio_restore_state();
 			break;
+		case PM_STATE_SUSPEND_TO_DISK:
 		case PM_STATE_SOFT_OFF:
 			// never get here, system reboots
 			break;
@@ -204,7 +207,6 @@ static int stm32_power_init(const struct device *dev)
 
 #ifdef CONFIG_DEBUG
 	/* Enable the Debug Module during STOP mode */
-	//LL_DBGMCU_EnableDBGStopMode();
 	HAL_DBGMCU_EnableDBGSleepMode();
 	HAL_DBGMCU_EnableDBGStopMode();
 	HAL_DBGMCU_EnableDBGStandbyMode();
