@@ -1927,6 +1927,26 @@
  * @}
  */ /* end of timer_tracing_apis */
 
+/**
+ * @brief Power tracing APIs
+ * @defgroup power_tracing_apis Power Tracing APIs
+ * @ingroup tracing_apis
+ * @{
+ */
+
+/**
+ * @brief Trace power state enter
+ * @param power_state info object
+ */
+#define sys_port_pm_state_enter(state)
+
+/**
+ * @brief Trace power state exit
+ * @param power_state info object
+ */
+#define sys_port_pm_state_exit(state)
+
+
 
 /**
  * @}
