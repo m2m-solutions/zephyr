@@ -302,6 +302,11 @@ config TRACING_TIMER
 	help
 	  Enable tracing Timers.
 
+	config TRACING_PM
+	bool "Enable tracing power management transitions"
+	default y
+	help
+	  Enable tracing power management.
 endmenu  # Tracing Configuration
 
 endif
