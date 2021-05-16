@@ -1950,6 +1950,21 @@ void sys_trace_isr_exit_to_scheduler(void);
 void sys_trace_idle(void);
 
 /**
+ * @brief Power tracing APIs
+ * @defgroup power_tracing_apis Power Tracing APIs
+ * @ingroup tracing_apis
+ * @brief Trace power state enter
+ * @param power_state info object
+ */
+#define sys_port_pm_state_enter(state)
+
+/**
+ * @brief Trace power state exit
+ * @param power_state info object
+ */
+#define sys_port_pm_state_exit(state)
+
+/**
  * @}
  */
 #endif
