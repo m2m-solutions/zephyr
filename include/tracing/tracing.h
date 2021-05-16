@@ -20,6 +20,25 @@
 #else
 
 /**
+ * @brief Power tracing APIs
+ * @defgroup power_tracing_apis Power Tracing APIs
+ * @ingroup tracing_apis
+ * @{
+ */
+
+/**
+ * @brief Trace power state enter
+ * @param power_state info object
+ */
+#define sys_trace_pm_power_state_set(state)
+
+/**
+ * @brief Trace power state exit
+ * @param power_state info object
+ */
+#define sys_trace_pm_power_state_exit(state)
+
+/**
  * @brief Thread Tracing APIs
  * @defgroup thread_tracing_apis Thread Tracing APIs
  * @ingroup tracing_apis
