@@ -37,7 +37,12 @@ struct gpio_backup {
 };
 
 static GPIO_TypeDef *const _gpios[] = {
-	GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOH
+	GPIOA,
+	GPIOB,
+	GPIOC,
+	GPIOD,
+	//GPIOE,
+	//GPIOH
 };
 #define GPIO_CTRL_COUNT (sizeof(_gpios)/sizeof(_gpios[0]))
 
@@ -65,15 +70,19 @@ static void _gpio_save_state(){
 	cfg.Mode = GPIO_MODE_ANALOG;
 	cfg.Pull = GPIO_NOPULL;
 
-	LL_GPIO_Init(GPIOB, &cfg);
-	LL_GPIO_Init(GPIOE, &cfg);
-	LL_GPIO_Init(GPIOH, &cfg);
-
 	// do not toggle PA0 since this is a wakeup pin!
-	cfg.Pin = 0xfffffffe;
+	cfg.Pin = 0xffffffff & ~(BIT(0) | BIT(1) | BIT(13) | BIT(14));
 	LL_GPIO_Init(GPIOA, &cfg);
-	cfg.Pin = 0xfffffffd;
+
+	cfg.Pin = 0xffffffff & ~(BIT(1) | BIT(2));
+	LL_GPIO_Init(GPIOB, &cfg);
+
+	cfg.Pin = 0xffffffff & ~(BIT(1) | BIT(10) | BIT(11) | BIT(12));
 	LL_GPIO_Init(GPIOC, &cfg);
+
+	//cfg.Pin = 0xffffffff;
+	//LL_GPIO_Init(GPIOE, &cfg);
+	//LL_GPIO_Init(GPIOH, &cfg);
 
 	__HAL_RCC_GPIOA_CLK_DISABLE();
 	__HAL_RCC_GPIOB_CLK_DISABLE();
@@ -103,6 +112,8 @@ static void _gpio_restore_state(){
 /* Invoke Low Power/System Off specific Tasks */
 void pm_power_state_set(struct pm_state_info info)
 {
+	//k_cpu_idle();
+	//return;
 	switch(info.state){
 		case PM_STATE_ACTIVE:
 			break;
@@ -129,6 +140,9 @@ void pm_power_state_set(struct pm_state_info info)
 			LL_LPM_EnableSleep();
 			break;
 		case PM_STATE_SUSPEND_TO_RAM:
+			__disable_irq();
+			_gpio_save_state();
+
 			LL_RTC_ClearFlag_WUT(RTC);
 
 			// power down as much as possible
@@ -140,15 +154,12 @@ void pm_power_state_set(struct pm_state_info info)
 			// voltage regulator in low power mode
 			LL_PWR_SetRegulModeLP(LL_PWR_REGU_LPMODES_LOW_POWER);
 
-				/* ensure the proper wake-up system clock */
+			// ensure the proper wake-up system clock
 			LL_RCC_SetClkAfterWakeFromStop(RCC_STOP_WAKEUPCLOCK_SELECTED);
 
 			LL_PWR_ClearFlag_WU();
 			LL_PWR_SetPowerMode(LL_PWR_MODE_STOP);
 			LL_LPM_EnableDeepSleep();
-
-			__disable_irq();
-			_gpio_save_state();
 			break;
 		case PM_STATE_SUSPEND_TO_DISK:
 			__fallthrough;
@@ -169,6 +180,8 @@ void pm_power_state_set(struct pm_state_info info)
 /* Handle SOC specific activity after Low Power Mode Exit */
 void pm_power_state_exit_post_ops(struct pm_state_info info)
 {
+	//irq_unlock(0);
+	//return;
 	switch(info.state){
 		case PM_STATE_ACTIVE:
 			break;
@@ -180,6 +193,8 @@ void pm_power_state_exit_post_ops(struct pm_state_info info)
 			break;
 		case PM_STATE_SUSPEND_TO_RAM:
 			_gpio_restore_state();
+			LL_PWR_DisableUltraLowPower();
+			LL_LPM_DisableSleepOnExit();
 			break;
 		case PM_STATE_SUSPEND_TO_DISK:
 		case PM_STATE_SOFT_OFF:
@@ -207,9 +222,9 @@ static int stm32_power_init(const struct device *dev)
 
 #ifdef CONFIG_DEBUG
 	/* Enable the Debug Module during STOP mode */
-	HAL_DBGMCU_EnableDBGSleepMode();
-	HAL_DBGMCU_EnableDBGStopMode();
-	HAL_DBGMCU_EnableDBGStandbyMode();
+	//LL_DBGMCU_EnableDBGSleepMode();
+	LL_DBGMCU_EnableDBGStopMode();
+	//LL_DBGMCU_EnableDBGStandbyMode();
 #endif /* CONFIG_DEBUG */
 
 	return 0;
