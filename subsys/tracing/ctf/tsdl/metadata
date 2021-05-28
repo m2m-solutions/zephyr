@@ -146,11 +146,17 @@ event {
 event {
 	name = isr_enter;
 	id = 0x1B;
+	fields := struct {
+		uint8_t vect;
+	};
 };
 
 event {
 	name = isr_exit;
 	id = 0x1C;
+	fields := struct {
+		uint8_t vect;
+	};
 };
 
 event {
