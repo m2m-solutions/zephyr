@@ -1007,7 +1007,7 @@ static inline k_ticks_t z_vrfy_k_thread_timeout_expires_ticks(
 #ifdef CONFIG_INSTRUMENT_THREAD_SWITCHING
 void z_thread_mark_switched_in(void)
 {
-#ifdef CONFIG_TRACING
+#ifdef CONFIG_TRACING_THREAD
 	SYS_PORT_TRACING_FUNC(k_thread, switched_in);
 #endif
 
@@ -1062,7 +1062,7 @@ void z_thread_mark_switched_out(void)
 	threads_runtime_stats.execution_cycles += diff;
 #endif /* CONFIG_THREAD_RUNTIME_STATS */
 
-#ifdef CONFIG_TRACING
+#ifdef CONFIG_TRACING_THREAD
 	SYS_PORT_TRACING_FUNC(k_thread, switched_out);
 #endif
 }
