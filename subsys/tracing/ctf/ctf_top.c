@@ -148,14 +148,18 @@ void sys_trace_k_thread_name_set(struct k_thread *thread, int ret)
 
 }
 
+__weak uint8_t z_vectactive(){
+	return 0;
+}
+
 void sys_trace_isr_enter(void)
 {
-	ctf_top_isr_enter();
+	ctf_top_isr_enter(z_vectactive() - 16);
 }
 
 void sys_trace_isr_exit(void)
 {
-	ctf_top_isr_exit();
+	ctf_top_isr_exit(z_vectactive() - 16);
 }
 
 void sys_trace_isr_exit_to_scheduler(void)
