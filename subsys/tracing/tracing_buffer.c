@@ -6,7 +6,7 @@
 
 #include <sys/ring_buffer.h>
 
-static struct ring_buf tracing_ring_buf;
+static struct ring_buf tracing_ring_buf = {0};
 static uint8_t tracing_buffer[CONFIG_TRACING_BUFFER_SIZE + 1];
 static uint8_t tracing_cmd_buffer[CONFIG_TRACING_CMD_BUFFER_SIZE];
 
