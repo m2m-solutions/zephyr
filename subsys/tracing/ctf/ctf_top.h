@@ -183,14 +183,14 @@ static inline void ctf_top_thread_name_set(uint32_t thread_id,
 		  name);
 }
 
-static inline void ctf_top_isr_enter(void)
+static inline void ctf_top_isr_enter(uint8_t vect)
 {
-	CTF_EVENT(CTF_LITERAL(uint8_t, CTF_EVENT_ISR_ENTER));
+	CTF_EVENT(CTF_LITERAL(uint8_t, CTF_EVENT_ISR_ENTER), vect);
 }
 
-static inline void ctf_top_isr_exit(void)
+static inline void ctf_top_isr_exit(uint8_t vect)
 {
-	CTF_EVENT(CTF_LITERAL(uint8_t, CTF_EVENT_ISR_EXIT));
+	CTF_EVENT(CTF_LITERAL(uint8_t, CTF_EVENT_ISR_EXIT), vect);
 }
 
 static inline void ctf_top_isr_exit_to_scheduler(void)
