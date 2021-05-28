@@ -28,87 +28,6 @@ LOG_MODULE_DECLARE(soc, CONFIG_SOC_LOG_LEVEL);
 #define RCC_STOP_WAKEUPCLOCK_SELECTED LL_RCC_STOP_WAKEUPCLOCK_HSI
 #endif
 
-struct gpio_backup {
-	uint32_t MODER;
-	uint32_t OTYPER;
-	uint32_t OSPEEDR;
-	uint32_t AFRL;
-	uint32_t AFRH;
-};
-
-static GPIO_TypeDef *const _gpios[] = {
-	GPIOA,
-	GPIOB,
-	GPIOC,
-	GPIOD,
-	//GPIOE,
-	//GPIOH
-};
-#define GPIO_CTRL_COUNT (sizeof(_gpios)/sizeof(_gpios[0]))
-
-static struct gpio_backup _gpio[GPIO_CTRL_COUNT];
-
-static void _gpio_save_state(){
-	LL_GPIO_InitTypeDef cfg;
-
-	__HAL_RCC_GPIOA_CLK_ENABLE();
-	__HAL_RCC_GPIOB_CLK_ENABLE();
-	__HAL_RCC_GPIOC_CLK_ENABLE();
-	__HAL_RCC_GPIOD_CLK_ENABLE();
-	__HAL_RCC_GPIOE_CLK_ENABLE();
-	__HAL_RCC_GPIOH_CLK_ENABLE();
-
-	for(unsigned c = 0; c < GPIO_CTRL_COUNT; c++){
-		_gpio[c].MODER = _gpios[c]->MODER;
-		_gpio[c].OTYPER = _gpios[c]->OTYPER;
-		_gpio[c].OSPEEDR = _gpios[c]->OSPEEDR;
-		_gpio[c].AFRL = _gpios[c]->AFR[0];
-		_gpio[c].AFRH = _gpios[c]->AFR[1];
-	}
-
-	cfg.Pin = GPIO_PIN_All;
-	cfg.Mode = GPIO_MODE_ANALOG;
-	cfg.Pull = GPIO_NOPULL;
-
-	// do not toggle PA0 since this is a wakeup pin!
-	cfg.Pin = 0xffffffff & ~(BIT(0) | BIT(1) | BIT(13) | BIT(14));
-	LL_GPIO_Init(GPIOA, &cfg);
-
-	cfg.Pin = 0xffffffff & ~(BIT(1) | BIT(2));
-	LL_GPIO_Init(GPIOB, &cfg);
-
-	cfg.Pin = 0xffffffff & ~(BIT(1) | BIT(10) | BIT(11) | BIT(12));
-	LL_GPIO_Init(GPIOC, &cfg);
-
-	//cfg.Pin = 0xffffffff;
-	//LL_GPIO_Init(GPIOE, &cfg);
-	//LL_GPIO_Init(GPIOH, &cfg);
-
-	__HAL_RCC_GPIOA_CLK_DISABLE();
-	__HAL_RCC_GPIOB_CLK_DISABLE();
-	__HAL_RCC_GPIOC_CLK_DISABLE();
-	__HAL_RCC_GPIOD_CLK_DISABLE();
-	__HAL_RCC_GPIOE_CLK_DISABLE();
-	__HAL_RCC_GPIOH_CLK_DISABLE();
-}
-
-static void _gpio_restore_state(){
-	__HAL_RCC_GPIOA_CLK_ENABLE();
-	__HAL_RCC_GPIOB_CLK_ENABLE();
-	__HAL_RCC_GPIOC_CLK_ENABLE();
-	__HAL_RCC_GPIOD_CLK_ENABLE();
-	__HAL_RCC_GPIOE_CLK_ENABLE();
-	__HAL_RCC_GPIOH_CLK_ENABLE();
-
-	for(unsigned c = 0; c < GPIO_CTRL_COUNT; c++){
-		_gpios[c]->MODER = _gpio[c].MODER;
-		_gpios[c]->OTYPER = _gpio[c].OTYPER;
-		_gpios[c]->OSPEEDR = _gpio[c].OSPEEDR;
-		_gpios[c]->AFR[0] = _gpio[c].AFRL;
-		_gpios[c]->AFR[1] = _gpio[c].AFRH;
-	}
-}
-
 /* Invoke Low Power/System Off specific Tasks */
 void pm_power_state_set(struct pm_state_info info)
 {
@@ -140,9 +59,6 @@ void pm_power_state_set(struct pm_state_info info)
 			LL_LPM_EnableSleep();
 			break;
 		case PM_STATE_SUSPEND_TO_RAM:
-			__disable_irq();
-			_gpio_save_state();
-
 			LL_RTC_ClearFlag_WUT(RTC);
 
 			// power down as much as possible
@@ -159,6 +75,7 @@ void pm_power_state_set(struct pm_state_info info)
 
 			LL_PWR_ClearFlag_WU();
 			LL_PWR_SetPowerMode(LL_PWR_MODE_STOP);
+
 			LL_LPM_EnableDeepSleep();
 			break;
 		case PM_STATE_SUSPEND_TO_DISK:
@@ -192,7 +109,6 @@ void pm_power_state_exit_post_ops(struct pm_state_info info)
 			LL_LPM_DisableSleepOnExit();
 			break;
 		case PM_STATE_SUSPEND_TO_RAM:
-			_gpio_restore_state();
 			LL_PWR_DisableUltraLowPower();
 			LL_LPM_DisableSleepOnExit();
 			break;
