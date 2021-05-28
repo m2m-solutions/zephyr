@@ -1069,3 +1069,8 @@ void z_arm_fault_init(void)
 	SCB->CCR |= SCB_CCR_STKOFHFNMIGN_Msk;
 #endif /* CONFIG_BUILTIN_STACK_GUARD */
 }
+
+uint8_t z_vectactive(){
+	uint8_t ret = SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk;
+	return ret;
+}
