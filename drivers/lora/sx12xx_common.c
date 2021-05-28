@@ -19,6 +19,7 @@ LOG_MODULE_REGISTER(sx12xx_common, CONFIG_LORA_LOG_LEVEL);
 
 static struct sx12xx_data {
 	struct k_sem data_sem;
+	struct k_sem tx_sem;
 	RadioEvents_t events;
 	uint8_t *rx_buf;
 	uint8_t rx_len;
@@ -63,14 +64,20 @@ static void sx12xx_ev_rx_done(uint8_t *payload, uint16_t size, int16_t rssi,
 static void sx12xx_ev_tx_done(void)
 {
 	Radio.Sleep();
+	k_sem_give(&dev_data.tx_sem);
 }
 
 int sx12xx_lora_send(const struct device *dev, uint8_t *data,
 		     uint32_t data_len)
 {
 	Radio.SetMaxPayloadLength(MODEM_LORA, data_len);
-
 	Radio.Send(data, data_len);
+
+	int ret = k_sem_take(&dev_data.tx_sem, K_MSEC(500));
+	if (ret < 0) {
+		LOG_ERR("TX completed timeout!");
+		return ret;
+	}
 
 	return 0;
 }
@@ -143,6 +150,7 @@ int sx12xx_lora_test_cw(const struct device *dev, uint32_t frequency,
 int sx12xx_init(const struct device *dev)
 {
 	k_sem_init(&dev_data.data_sem, 0, K_SEM_MAX_LIMIT);
+	k_sem_init(&dev_data.tx_sem, 0, K_SEM_MAX_LIMIT);
 
 	dev_data.events.TxDone = sx12xx_ev_tx_done;
 	dev_data.events.RxDone = sx12xx_ev_rx_done;
