@@ -158,28 +158,34 @@ static int eeprom_st25dv_init(const struct device *dev)
 		return -1;
 	}
 
+	// needed to ensure the chip is properly powered
+	k_busy_wait(2000);
+
 	uint8_t uuid[8] = { 0 };
 	uint8_t rev = 0;
 	uint8_t size[2] = { 0 };
 	if (_st25dv_read_conf(self, ST25DV_REG_UUID, uuid, 8) < 0) {
+		LOG_ERR("[st25dv]: can not read uuid");
 		return -1;
 	}
 	if (_st25dv_read_conf(self, ST25DV_REG_IC_REV, &rev, 1) < 0) {
+		LOG_ERR("[st25dv]: can not read revision");
 		return -1;
 	}
 	if (_st25dv_read_conf(self, ST25DV_REG_MEM_SIZE, size, 2) < 0) {
+		LOG_ERR("[st25dv]: can not read mem size");
 		return -1;
 	}
 
 	if (uuid[6] == 0x02 && uuid[7] == 0xe0) {
 		LOG_INF("Manufacturer: STMicroelectronics");
 	} else {
+		LOG_ERR("[st25dv]: wrong chip uuid");
 		return -1;
 	}
 	LOG_INF("UUID: %02x%02x%02x%02x%02x%02x%02x%02x", uuid[7], uuid[6], uuid[5], uuid[4],
 		uuid[3], uuid[2], uuid[1], uuid[0]);
-	LOG_INF("Revision 0x%02x", rev);
-	LOG_INF("Size 0x%02x%02x", size[1], size[0]);
+	printk("[st25dv]: rev 0x%02x, size 0x%02x%02x\n", rev, size[1], size[0]);
 
 	self->size = ((uint16_t)size[1]) << 8 | size[0];
 
@@ -233,6 +239,6 @@ static const struct eeprom_driver_api eeprom_st25dv_api = {
 	};                                                                                         \
 	DEVICE_DT_INST_DEFINE(index, eeprom_st25dv_init, eeprom_st25dv_pm, &_st25dv_data_##index,  \
 			      &_st25dv_config_##index, POST_KERNEL,                                \
-			      CONFIG_KERNEL_INIT_PRIORITY_DEVICE, &eeprom_st25dv_api);
+			      80, &eeprom_st25dv_api);
 
 DT_INST_FOREACH_STATUS_OKAY(ST25DV_DEVICE_INIT)
