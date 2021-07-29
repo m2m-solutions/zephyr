@@ -58,8 +58,11 @@ hardware features:
      - :kconfig:`CONFIG_GPIO`
      - :dtcompatible:`rpi,pico-gpio`
    * - I2C
-     - :kconfig:`CONFIG_I2C`
-     - :dtcompatible:`rpi,pico-i2c`
+     - :kconfig:option:`CONFIG_I2C`
+     - :dtcompatible:`snps,designware-i2c`
+   * - USB Device
+     - :kconfig:option:`CONFIG_USB_DEVICE_STACK`
+     - :dtcompatible:`raspberrypi,pico-usbd`
 
 Programming and Debugging
 *************************
