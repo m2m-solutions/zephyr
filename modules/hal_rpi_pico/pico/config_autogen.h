@@ -35,4 +35,9 @@
 #define __always_inline ALWAYS_INLINE
 #endif /* __always_inline */
 
+/* Pico SDK assumes __STRING defined */
+#ifndef __STRING
+#define __STRING(n) #n
+#endif
+
 #endif
