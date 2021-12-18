@@ -4,3 +4,5 @@
 zephyr_library()
 
 zephyr_library_sources(soc.c)
+
+zephyr_linker_sources(RODATA rp2-rodata.ld)
