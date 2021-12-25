@@ -70,6 +70,7 @@ if(CONFIG_HAS_RPI_PICO)
     ${common_dir}/pico_base/include
     ${common_dir}/pico_time/include
     ${rp2_common_dir}/pico_platform/include
+    ${rp2_common_dir}/pico_bootrom/include
     ${CMAKE_CURRENT_LIST_DIR}
   )
 
