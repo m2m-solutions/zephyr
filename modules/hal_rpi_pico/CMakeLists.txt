@@ -29,6 +29,7 @@ if(CONFIG_HAS_RPI_PICO)
       CMAKE_ARGS
         -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
         -DCMAKE_ASM_COMPILER=${CMAKE_ASM_COMPILER}
+        -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
         -DZEPHYR_HAL_RPI_PICO_MODULE_DIR=${ZEPHYR_HAL_RPI_PICO_MODULE_DIR}
         -DZEPHYR_BASE=${ZEPHYR_BASE}
         -DFLASH_TYPE=${flash_type}
@@ -49,6 +50,8 @@ if(CONFIG_HAS_RPI_PICO)
     ${rp2_common_dir}/hardware_pll/pll.c
     ${rp2_common_dir}/hardware_xosc/xosc.c
     ${rp2_common_dir}/hardware_watchdog/watchdog.c
+    ${rp2_common_dir}/hardware_pio/pio.c
+    ${rp2_common_dir}/hardware_claim/claim.c
     ${rp2_common_dir}/pico_platform/platform.c
     ${rp2_common_dir}/pico_bootrom/bootrom.c
   )
@@ -63,6 +66,8 @@ if(CONFIG_HAS_RPI_PICO)
     ${rp2_common_dir}/hardware_sync/include
     ${rp2_common_dir}/hardware_timer/include
     ${rp2_common_dir}/hardware_resets/include
+    ${rp2_common_dir}/hardware_pio/include
+    ${rp2_common_dir}/hardware_claim/include
     ${rp2040_dir}/hardware_regs/include
     ${rp2040_dir}/hardware_structs/include
     ${common_dir}/pico_base/include
