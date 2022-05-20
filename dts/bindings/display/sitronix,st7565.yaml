@@ -1,0 +1,27 @@
+# Copyright (c) 2022, Mark Olsson <mark@markolsson.se>
+# SPDX-License-Identifier: Apache-2.0
+
+description: ST7565 display controller
+
+compatible: "sitronix,st7565"
+
+include: [spi-device.yaml, display-controller.yaml]
+
+properties:
+    reset-gpios:
+      type: phandle-array
+      required: true
+      description: RESET pin.
+
+        The RESET pin of ST7565 is active low.
+        If connected directly the MCU pin should be configured
+        as active low.
+
+    cmd-data-gpios:
+      type: phandle-array
+      required: true
+      description: D/CX pin.
+
+        The D/CX pin of ST7565 is active low (transmission command byte).
+        If connected directly the MCU pin should be configured
+        as active low.

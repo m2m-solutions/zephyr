@@ -1,0 +1,21 @@
+# ST7565 display driver configuration options
+
+# Copyright (c) 2022 Mark Olsson <mark@markolsson.se>
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig ST7565
+	bool "ST7565 display driver"
+	depends on SPI
+	help
+	  Enable driver for ST7565 display driver.
+
+if LVGL
+
+choice LVGL_COLOR_DEPTH
+	default LVGL_COLOR_DEPTH_1
+endchoice
+
+config LVGL_BITS_PER_PIXEL
+	default 1
+
+endif # LVGL
