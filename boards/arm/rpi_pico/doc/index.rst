@@ -63,6 +63,9 @@ hardware features:
    * - HWINFO
      - :kconfig:option:`CONFIG_HWINFO`
      - N/A
+   * - USB Device
+     - :kconfig:option:`CONFIG_USB_DEVICE_STACK`
+     - :dtcompatible:`raspberrypi,pico-usbd`
 
 Programming and Debugging
 *************************
