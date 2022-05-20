@@ -36,10 +36,11 @@
 #endif /* __always_inline */
 
 /* Two definitions required for the flash driver */
-#define __STRING(x) #x
+#ifndef __STRING
+#define __STRING(n) #n
+#endif
 
 #ifndef __noinline
 #define __noinline __attribute__((noinline))
-#endif
 
 #endif

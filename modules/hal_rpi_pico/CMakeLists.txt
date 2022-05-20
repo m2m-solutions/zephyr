@@ -68,6 +68,7 @@ if(CONFIG_HAS_RPI_PICO)
     ${rp2040_dir}/hardware_regs/include
     ${rp2040_dir}/hardware_structs/include
     ${common_dir}/pico_base/include
+    ${common_dir}/pico_time/include
     ${rp2_common_dir}/pico_platform/include
     ${CMAKE_CURRENT_LIST_DIR}
   )
@@ -98,4 +99,8 @@ if(CONFIG_HAS_RPI_PICO)
     PROPERTIES
     COMPILE_FLAGS $<TARGET_PROPERTY:compiler,warning_no_pointer_arithmetic>
   )
+  zephyr_library_sources_ifdef(CONFIG_PICOSDK_USE_SPI
+          ${rp2_common_dir}/hardware_spi/spi.c)
+  zephyr_include_directories_ifdef(CONFIG_PICOSDK_USE_SPI
+          ${rp2_common_dir}/hardware_spi/include)
 endif()
