@@ -5,7 +5,7 @@ description: RaspberryPi Pico USB Device Controller
 
 compatible: "raspberrypi,pico-usbd"
 
-include: usb-ep.yaml
+include: [usb-ep.yaml, reset-device.yaml]
 
 properties:
     reg:

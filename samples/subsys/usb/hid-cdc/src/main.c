@@ -8,7 +8,6 @@
 #include <drivers/gpio.h>
 #include <drivers/uart.h>
 #include <string.h>
-#include <random/rand32.h>
 
 #include <usb/usb_device.h>
 #include <usb/class/usb_hid.h>
@@ -549,6 +548,7 @@ static void status_cb(enum usb_dc_status_code status, const uint8_t *param)
 
 void main(void)
 {
+	LOG_INF("FOO");
 	const struct device *cdc_dev[] = {
 		DT_FOREACH_STATUS_OKAY(zephyr_cdc_acm_uart, DEVICE_AND_COMMA)
 	};
@@ -669,8 +669,7 @@ void main(void)
 			case GPIO_BUTTON_0:
 			{
 				/* Move the mouse in random direction */
-				uint8_t rep[] = {0x00, sys_rand32_get(),
-					      sys_rand32_get(), 0x00};
+				uint8_t rep[] = {0x00, 0x01, 0x01, 0x00};
 
 				k_sem_take(&usb_sem, K_FOREVER);
 				hid_int_ep_write(hid0_dev, rep,
