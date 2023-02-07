@@ -608,8 +608,13 @@ static int sx127x_lora_init(const struct device *dev)
 		return -EIO;
 	}
 
-	LOG_INF("SX127x version 0x%02x found", regval);
+	if (regval == 0xFF)	{
+		LOG_ERR("SX1276 version was read as 0xFF which is invalid, is the LoRa chip connected?");
+		return -EIO;
+	}
 
+	LOG_INF("SX127x version 0x%02x found", regval);
+	
 	ret = sx127x_antenna_configure();
 	if (ret < 0) {
 		LOG_ERR("Unable to configure antenna");

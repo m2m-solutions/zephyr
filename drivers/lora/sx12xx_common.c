@@ -22,6 +22,17 @@
 
 LOG_MODULE_REGISTER(sx12xx_common, CONFIG_LORA_LOG_LEVEL);
 
+// I hacked together a type of heartbeat incase the sx1276 restarts 
+// (because it lost VCC for an instance for example)
+#define LORA_HEARTBEAT_TIMEOUT K_SECONDS(10)
+
+static void lora_heartbeat_cb(struct k_timer* timer);
+static void lora_heartbeat_work_handler(struct k_work *work);
+
+K_WORK_DELAYABLE_DEFINE(lora_heartbeat_work, lora_heartbeat_work_handler);
+
+K_TIMER_DEFINE(lora_heartbeat, lora_heartbeat_cb, NULL);
+
 struct sx12xx_rx_params {
 	uint8_t *buf;
 	uint8_t *size;
@@ -33,6 +44,7 @@ static struct sx12xx_data {
 	const struct device *dev;
 	struct k_poll_signal *operation_done;
 	lora_recv_cb async_rx_cb;
+	lora_recv_err_cb err_cb;
 	RadioEvents_t events;
 	struct lora_modem_config tx_cfg;
 	atomic_t modem_usage;
@@ -277,6 +289,9 @@ int sx12xx_lora_recv_async(const struct device *dev, lora_recv_cb cb)
 {
 	/* Cancel ongoing reception */
 	if (cb == NULL) {
+		k_timer_stop(&lora_heartbeat);
+		k_work_cancel_delayable(&lora_heartbeat_work);
+
 		if (!modem_release(&dev_data)) {
 			/* Not receiving or already being stopped */
 			return -EINVAL;
@@ -289,6 +304,8 @@ int sx12xx_lora_recv_async(const struct device *dev, lora_recv_cb cb)
 		return -EBUSY;
 	}
 
+	k_timer_start(&lora_heartbeat, LORA_HEARTBEAT_TIMEOUT, LORA_HEARTBEAT_TIMEOUT);
+
 	/* Store parameters */
 	dev_data.async_rx_cb = cb;
 
@@ -300,7 +317,7 @@ int sx12xx_lora_recv_async(const struct device *dev, lora_recv_cb cb)
 }
 
 int sx12xx_lora_config(const struct device *dev,
-		       struct lora_modem_config *config)
+		       struct lora_modem_config *config, lora_recv_err_cb err_cb)
 {
 	/* Ensure available, decremented after configuration */
 	if (!modem_acquire(&dev_data)) {
@@ -308,6 +325,7 @@ int sx12xx_lora_config(const struct device *dev,
 	}
 
 	Radio.SetChannel(config->frequency);
+	dev_data.err_cb = NULL;
 
 	if (config->tx) {
 		/* Store TX config locally for airtime calculations */
@@ -323,6 +341,7 @@ int sx12xx_lora_config(const struct device *dev,
 				  config->datarate, config->coding_rate,
 				  0, config->preamble_len, 10, false, 0,
 				  false, 0, 0, config->iq_inverted, true);
+		dev_data.err_cb = err_cb;
 	}
 
 	Radio.SetPublicNetwork(config->public_network);
@@ -342,6 +361,46 @@ int sx12xx_lora_test_cw(const struct device *dev, uint32_t frequency,
 
 	Radio.SetTxContinuousWave(frequency, tx_power, duration);
 	return 0;
+}
+
+// This is an ugly hack to verify if the radio can even be reached,
+// because apparently the geniuses who wrote the LoRa driver wasn't
+// aware of a concept called error handling...
+
+/// @brief This work should in theory not be preemtible so it can't be
+/// interupted by the LoRa IRQ so as long as we do not do stupid things
+/// we shouldn't run into race conditions or undefined behaviour with threads.
+static void lora_heartbeat_work_handler(struct k_work *work)
+{
+	// Return early if the modem is not in use by rx_async
+	// This makes it kinda thread-safe because we are not trying to utilise it 
+	atomic_val_t modem_usage = atomic_get(&dev_data.modem_usage);
+	if (modem_usage != STATE_BUSY)
+	{
+		return;
+	}
+
+	LOG_DBG("Reading LoRa opmode");
+	uint8_t opmode = Radio.Read(0x1);
+	if (opmode == 0xFF) {
+		LOG_ERR("LoRa opmode was 0xFF which is illegal (according to me, not the spec) and is a sign of an error, erroring");
+		if (dev_data.err_cb != NULL) {
+			dev_data.err_cb();
+		}
+	}
+	if ((opmode & 0x05) != 0x05) { // 0x05 is RFLR_OPMODE_RECEIVER which means it is in reciever mode
+		LOG_ERR("LoRa opmode was not recieving (0x05), erroring, opmode: %d", opmode);
+		if (dev_data.err_cb != NULL) {
+			dev_data.err_cb();
+		}
+	}
+}
+
+static void lora_heartbeat_cb(struct k_timer* timer)
+{
+	ARG_UNUSED(timer);
+
+	k_work_schedule(&lora_heartbeat_work, K_MSEC(10));
 }
 
 int sx12xx_init(const struct device *dev)

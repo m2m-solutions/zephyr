@@ -32,7 +32,7 @@ int sx12xx_lora_recv(const struct device *dev, uint8_t *data, uint8_t size,
 int sx12xx_lora_recv_async(const struct device *dev, lora_recv_cb cb);
 
 int sx12xx_lora_config(const struct device *dev,
-		       struct lora_modem_config *config);
+		       struct lora_modem_config *config, lora_recv_err_cb cb);
 
 int sx12xx_lora_test_cw(const struct device *dev, uint32_t frequency,
 			int8_t tx_power,

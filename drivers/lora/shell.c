@@ -117,7 +117,7 @@ static const struct device *get_configured_modem(const struct shell *shell)
 		return NULL;
 	}
 
-	ret = lora_config(dev, &modem_config);
+	ret = lora_config(dev, &modem_config, NULL);
 	if (ret < 0) {
 		shell_error(shell, "LoRa config failed");
 		return NULL;
