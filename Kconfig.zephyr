@@ -346,6 +346,12 @@ config NO_OPTIMIZATIONS
 
 endchoice
 
+config COMPILER_SAVE_TEMPS
+ 	bool "Save temporary object files"
+ 	help
+ 	  Instruct the compiler to save the temporary intermediate files
+ 	  permanently. These can be useful for troubleshooting build issues.
+
 config COMPILER_COLOR_DIAGNOSTICS
 	bool "Colored diagnostics"
 	default y
