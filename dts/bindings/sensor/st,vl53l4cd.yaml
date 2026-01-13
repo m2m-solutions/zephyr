@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: >
+  STMicroelectronics VL53L4CD ULD ToF sensor
+
+compatible: "st,vl53l4cd"
+
+include: i2c-device.yaml
+
+properties:
+  timing-budget-ms:
+    type: int
+    required: false
+    description: Ranging timing budget in milliseconds (e.g. 50)
+  inter-measure-ms:
+    type: int
+    required: false
+    description: Inter-measurement period in milliseconds (0 for back-to-back)
+  xshut-gpios:
+    type: phandle-array
+    required: false

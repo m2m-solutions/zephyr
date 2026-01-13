@@ -1,0 +1,16 @@
+
+menuconfig VL53L4CD
+    bool "ST VL53L4CD Time-of-Flight sensor"
+    depends on I2C && GPIO 
+    help
+        Enable driver for the ST VL53L4CD ToF sensor.
+
+
+if VL53L4CD
+    config VL53L4CD_DEFAULT_TIMING_BUDGET_MS
+        int "Default timing budget (ms)"
+        range 10 200
+        default 50
+        help
+            Used if devicetree property timing-budget-ms is absent.
+endif # VL53L4CD
